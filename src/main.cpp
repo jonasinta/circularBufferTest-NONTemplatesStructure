@@ -62,8 +62,10 @@ bool touchToggle = false;
 
 
  // Create a CircularBuffer instance with RTC memory
-  RTC_DATA_ATTR circ_bbuf_t<uint16_t, bufferSize> circularBuffer;
+RTC_DATA_ATTR circ_bbuf_t<uint16_t, bufferSize> circularBuffer;
 RTC_DATA_ATTR bool bufferInitialized = false;
+RTC_DATA_ATTR uint32_t decimals[5];
+RTC_DATA_ATTR double_t floaters[5];
 
 
 void setup() {
@@ -72,7 +74,8 @@ void setup() {
   //esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
 			//esp_task_wdt_add(NULL); //add current thread to WDT watch
    esp_sleep_enable_timer_wakeup(sleepTime * 1000000);  // Set up timer as the wake up source and set sleep duration to 5 seconds
-  
+   Serial.println("buffer items number; before initialise");
+   Serial.println(circularBuffer.items); 
  if (bufferInitialized) {
         Serial.println("Circular buffer initialized");
     } else {
@@ -90,9 +93,12 @@ void setup() {
         circularBuffer.items = 0;
         circularBuffer.isFull = false;
         bufferInitialized = true;
+        decimals[0,0,0,0,0];
+        floaters[0,0,0,0,0];
     }  
 
-   
+    Serial.println("buffer items number after initialise;");
+    Serial.println(circularBuffer.items);
   //circular buffer test routine----------------------------------------------
   // Add some values to the circular buffer
    
@@ -200,7 +206,32 @@ looptime_ms = now_ms -last_ms;
     }
 
 */ 
+
+//print buffer parameters
+Serial.println("buffer items number;");
+Serial.println(circularBuffer.items);
+Serial.println("Popping data from circular buffer-----------------------");
+Serial.println("Popping data from circular buffer-----------------------");
 uint16_t tempdata = 0;
+
+Serial.println("print temp buffers-decimals----------------------");
+for (size_t i = 0; i < 5; ++i) {
+        Serial.println(decimals[i]);
+    }
+    
+    Serial.println("print temp buffers-floats----------------------");
+for (size_t i = 0; i < 5; ++i) {
+        Serial.println(floaters[i]);
+    }
+    
+    
+Serial.println("set data into dedcimals buffer just before shutdown-----------------------");
+decimals[persistant%5] = persistant;
+
+
+Serial.println("set data into floaters buffer just before shutdown-----------------------");
+floaters[persistant%5] = (double_t)persistant / 100.0;
+
 while ( circularBuffer.items > 4) {
    Serial.println("Popping data from circular buffer-----------------------");
    circ_bbuf_pop(&circularBuffer, &tempdata);
