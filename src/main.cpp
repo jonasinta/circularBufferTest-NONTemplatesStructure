@@ -58,14 +58,17 @@ uint32_t last_ms;
 bool touchToggle = false;
 
 
-
+struct testStruct {
+    uint16_t decimals;
+    uint16_t floaters;
+};
 
 
  // Create a CircularBuffer instance with RTC memory
 RTC_DATA_ATTR circ_bbuf_t<uint16_t, bufferSize> circularBuffer;
 RTC_DATA_ATTR bool bufferInitialized = false;
-RTC_DATA_ATTR uint32_t decimals[5];
-RTC_DATA_ATTR double_t floaters[5];
+RTC_DATA_ATTR testStruct structuralTest[5];
+//RTC_DATA_ATTR double_t floaters[5];
 
 
 void setup() {
@@ -93,8 +96,8 @@ void setup() {
         circularBuffer.items = 0;
         circularBuffer.isFull = false;
         bufferInitialized = true;
-        decimals[0,0,0,0,0];
-        floaters[0,0,0,0,0];
+        //decimals[0,0,0,0,0];
+        //floaters[0,0,0,0,0];
     }  
 
     Serial.println("buffer items number after initialise;");
@@ -216,22 +219,24 @@ uint16_t tempdata = 0;
 
 Serial.println("print temp buffers-decimals----------------------");
 for (size_t i = 0; i < 5; ++i) {
-        Serial.println(decimals[i]);
+        Serial.println(structuralTest[i].decimals);
+        Serial.println(structuralTest[i].floaters);
     }
-    
+/* 
     Serial.println("print temp buffers-floats----------------------");
 for (size_t i = 0; i < 5; ++i) {
         Serial.println(floaters[i]);
     }
-    
+  */  
     
 Serial.println("set data into dedcimals buffer just before shutdown-----------------------");
-decimals[persistant%5] = persistant;
+structuralTest[persistant%5].decimals = persistant;
+structuralTest[persistant%5].decimals = (double_t)persistant / 100.0;
 
-
+/*
 Serial.println("set data into floaters buffer just before shutdown-----------------------");
 floaters[persistant%5] = (double_t)persistant / 100.0;
-
+*/
 while ( circularBuffer.items > 4) {
    Serial.println("Popping data from circular buffer-----------------------");
    circ_bbuf_pop(&circularBuffer, &tempdata);
