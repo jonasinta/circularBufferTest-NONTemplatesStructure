@@ -9,7 +9,7 @@
 #define WDT_TIMEOUT 3          // define a 3 seconds WDT (Watch Dog Timer)
 #include "Arduino.h"
 #include "WiFi.h"
-#include "CircularBuffer.hpp"
+#include "CircularBuffer.h"
 
 
 //buffer globals
@@ -58,17 +58,11 @@ uint32_t last_ms;
 bool touchToggle = false;
 
 
-struct testStruct {
-    uint16_t decimals;
-    uint16_t floaters;
-};
 
 
- // Create a CircularBuffer instance with RTC memory
-RTC_DATA_ATTR circ_bbuf_t<uint16_t, bufferSize> circularBuffer;
-RTC_DATA_ATTR bool bufferInitialized = false;
-RTC_DATA_ATTR testStruct structuralTest[5];
-//RTC_DATA_ATTR double_t floaters[5];
+
+
+
 
 
 void setup() {
@@ -78,32 +72,18 @@ void setup() {
 			//esp_task_wdt_add(NULL); //add current thread to WDT watch
    esp_sleep_enable_timer_wakeup(sleepTime * 1000000);  // Set up timer as the wake up source and set sleep duration to 5 seconds
    Serial.println("buffer items number; before initialise");
-   Serial.println(circularBuffer.items); 
- if (bufferInitialized) {
-        Serial.println("Circular buffer initialized");
-    } else {
-        Serial.println("Circular buffer not initialized");
-    }
+   
+  // Initialize the circular buffer
+  initCircularBuffer();
   
+ // Print buffer status
+ Serial.println("Buffer initialized:");
+ Serial.print("Items in buffer: ");
+ Serial.println(itemCount);
 
- // Initialize the circular buffer elements to zero if not already initialized
-    if (!bufferInitialized) {
-        for (size_t i = 0; i < bufferSize; ++i) {
-            circularBuffer.buffer[i] = 0;
-        }
-        circularBuffer.head = 0;
-        circularBuffer.tail = 0;
-        circularBuffer.items = 0;
-        circularBuffer.isFull = false;
-        bufferInitialized = true;
-        //decimals[0,0,0,0,0];
-        //floaters[0,0,0,0,0];
-    }  
 
-    Serial.println("buffer items number after initialise;");
-    Serial.println(circularBuffer.items);
-  //circular buffer test routine----------------------------------------------
-  // Add some values to the circular buffer
+    
+  
    
       Serial.print("RTC Test get Epoch; ");
        Serial.println(rtc.getEpoch());
@@ -169,8 +149,13 @@ looptime_ms = now_ms -last_ms;
  if (WiFi.status() == WL_CONNECTED) { 
   sendTelemetry(Str4, looptime_ms);
   sendTelemetry("fuckinFuckFuck", numbersend);
-  circ_bbuf_push(&circularBuffer, (uint16_t)numbersend);
-  }
+  if (pushToBuffer(numbersend)) {
+    Serial.print("Pushed to buffer: ");
+    Serial.println(numbersend);
+} else {
+    Serial.println("Buffer is full, cannot push.");
+}
+  } // close if (WiFi.status() == WL_CONNECTED) {
  last_ms = now_ms;
 
 /* my orig attempt at iterating the buffer
@@ -184,10 +169,10 @@ looptime_ms = now_ms -last_ms;
     Serial.println(circularBuffer.items);
     */
 
-    // Print the contents of the circular buffer using the iterable function
-    Serial.println("Circular Buffer Contents:");
-    circ_bbuf_iterate(&circularBuffer, [](uint16_t val) {
-        Serial.print(val);
+    // Print buffer contents
+    Serial.println("Buffer contents:");
+    iterateBuffer([](uint16_t value) {
+        Serial.print(value);
         Serial.print(" ");
     });
     Serial.println();
@@ -210,38 +195,24 @@ looptime_ms = now_ms -last_ms;
 
 */ 
 
-//print buffer parameters
-Serial.println("buffer items number;");
-Serial.println(circularBuffer.items);
-Serial.println("Popping data from circular buffer-----------------------");
-Serial.println("Popping data from circular buffer-----------------------");
+
+
 uint16_t tempdata = 0;
 
-Serial.println("print temp buffers-decimals----------------------");
-for (size_t i = 0; i < 5; ++i) {
-        Serial.println(structuralTest[i].decimals);
-        Serial.println(structuralTest[i].floaters);
-    }
-/* 
-    Serial.println("print temp buffers-floats----------------------");
-for (size_t i = 0; i < 5; ++i) {
-        Serial.println(floaters[i]);
-    }
-  */  
-    
-Serial.println("set data into dedcimals buffer just before shutdown-----------------------");
-structuralTest[persistant%5].decimals = persistant;
-structuralTest[persistant%5].decimals = (double_t)persistant / 100.0;
 
-/*
-Serial.println("set data into floaters buffer just before shutdown-----------------------");
-floaters[persistant%5] = (double_t)persistant / 100.0;
-*/
-while ( circularBuffer.items > 4) {
-   Serial.println("Popping data from circular buffer-----------------------");
-   circ_bbuf_pop(&circularBuffer, &tempdata);
-   Serial.println(tempdata); // do nothing
+
+    
+
+
+
+ // Simulate popping data if buffer has more than 4 items
+ if (itemCount > 4) {
+  uint16_t poppedValue;
+  if (popFromBuffer(&poppedValue)) {
+      Serial.print("Popped from buffer: ");
+      Serial.println(poppedValue);
   }
+}
     Serial.println("------------------popping end------------------");
 delay(2000);
 //Go to sleep now
