@@ -19,3 +19,13 @@ bool popFromBuffer(uint16_t* value);
 void iterateBuffer(void (*callback)(uint16_t));
 bool isBufferFull();
 bool isBufferEmpty();
+/*
+struct DataSend
+{
+	unsigned long epoch;
+	float tempC;
+	float tempCa;
+	float battV;
+    unsigned int reset_reason
+}  boing;
+  */

@@ -81,20 +81,16 @@ void setup() {
  Serial.print("Items in buffer: ");
  Serial.println(itemCount);
 
-
+// Print the memory address of circularBuffer
+Serial.print("Memory address of circularBuffer: ");
+Serial.println((uintptr_t)&circularBuffer, HEX);
     
   
    
       Serial.print("RTC Test get Epoch; ");
        Serial.println(rtc.getEpoch());
   
-   // circ_bbuf_push(&circularBuffer,(uint16_t)(millis()* persistant));
-   // circ_bbuf_push(&circularBuffer, persistant);
- //circ_bbuf_push(&circularBuffer, (uint16_t)rtc.getEpoch());
-
-
-    
-    
+ 
 
     //circular buffer test routine----------------------------------------------
 
