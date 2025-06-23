@@ -74,7 +74,7 @@ void setup() {
    Serial.println("buffer items number; before initialise");
    
   // Initialize the circular buffer
-  initCircularBuffer();
+  initCircularBuffer();  // from circularBuffer.h
   
  // Print buffer status
  Serial.println("Buffer initialized:");
@@ -83,7 +83,7 @@ void setup() {
 
 // Print the memory address of circularBuffer
 Serial.print("Memory address of circularBuffer: ");
-Serial.println((uintptr_t)&circularBuffer, HEX);
+Serial.println((uintptr_t)&EpochBuff, HEX);
     
   
    
