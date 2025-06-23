@@ -1,7 +1,10 @@
 #include "CircularBuffer.h"
 
 // RTC slow memory variables
-RTC_DATA_ATTR uint16_t circularBuffer[BUFFER_SIZE] = {0};
+RTC_DATA_ATTR uint16_t EpochBuff[BUFFER_SIZE] = {0};
+RTC_DATA_ATTR float Float1[BUFFER_SIZE] = {0};
+RTC_DATA_ATTR float Float2[BUFFER_SIZE] = {0};
+RTC_DATA_ATTR float Float3[BUFFER_SIZE] = {0};
 RTC_DATA_ATTR size_t head = 0;
 RTC_DATA_ATTR size_t tail = 0;
 RTC_DATA_ATTR size_t itemCount = 0;
@@ -11,7 +14,7 @@ RTC_DATA_ATTR bool isBufferInitialized = false;
 void initCircularBuffer() {
     if (!isBufferInitialized) {
         for (size_t i = 0; i < BUFFER_SIZE; ++i) {
-            circularBuffer[i] = 0;
+            EpochBuff[i] = 0;
         }
         head = 0;
         tail = 0;
@@ -25,7 +28,7 @@ bool pushToBuffer(uint16_t value) {
     if (isBufferFull()) {
         return false; // Buffer is full
     }
-    circularBuffer[head] = value;
+    EpochBuff[head] = value;
     head = (head + 1) % BUFFER_SIZE;
     itemCount++;
     return true;
@@ -36,7 +39,7 @@ bool popFromBuffer(uint16_t* value) {
     if (isBufferEmpty()) {
         return false; // Buffer is empty
     }
-    *value = circularBuffer[tail];
+    *value = EpochBuff[tail];
     tail = (tail + 1) % BUFFER_SIZE;
     itemCount--;
     return true;
@@ -46,7 +49,7 @@ bool popFromBuffer(uint16_t* value) {
 void iterateBuffer(void (*callback)(uint16_t)) {
     size_t current = tail;
     for (size_t i = 0; i < itemCount; ++i) {
-        callback(circularBuffer[current]);
+        callback(EpochBuff[current]);
         current = (current + 1) % BUFFER_SIZE;
     }
 }

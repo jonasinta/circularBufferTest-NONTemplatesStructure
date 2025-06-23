@@ -6,7 +6,7 @@
 constexpr size_t BUFFER_SIZE = 10;
 
 // Declare buffer and related variables in RTC slow memory
-extern RTC_DATA_ATTR uint16_t circularBuffer[BUFFER_SIZE];
+extern RTC_DATA_ATTR uint16_t EpochBuff[BUFFER_SIZE];
 extern RTC_DATA_ATTR size_t head;
 extern RTC_DATA_ATTR size_t tail;
 extern RTC_DATA_ATTR size_t itemCount;
