@@ -12,6 +12,14 @@
 #include "Arduino.h"
 #include "WiFi.h"
 #include "CircularBuffer.h"
+#include <FastLED.h> // for the serial rgb led control on GPIO 38
+#define LED_PIN     48      // Pin connected to the LED strip
+#define NUM_LEDS    1      // Number of LEDs in the strip
+#define COLOR_ORDER GRB     // Color order for SK6812
+
+#define switchGPIO 0 // GPIO pin for the switch
+
+CRGB leds[NUM_LEDS];
 
 
 //buffer globals
@@ -23,8 +31,7 @@ DATASEND sendstruct {
     0.0f, // Float3
    
 };
-// Define the buffer size
-constexpr size_t bufferSize = 10;
+char data[6];  // 5 bytes + null terminator for read comand from serial port
 
 
 // Function declarations
@@ -83,7 +90,12 @@ void myBufferPrintout(DATASEND datas) {
     Serial.println(" ");
 }
 
+RTC_DATA_ATTR bool buttonPressed = false; // Flag for button press
 
+void IRAM_ATTR handleButtonPress() {
+    buttonPressed = true; // Set the flag when button is pressed
+  
+}
 
 
 
@@ -94,19 +106,41 @@ void setup() {
 			//esp_task_wdt_add(NULL); //add current thread to WDT watch
    esp_sleep_enable_timer_wakeup(sleepTime * 1000000);  // Set up timer as the wake up source and set sleep duration to 5 seconds
    Serial.println("buffer items number; before initialise");
+
+   //FAST LED setup
+   FastLED.addLeds<SK6812, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+    FastLED.setBrightness(100); // Set brightness (0-255)
+    leds[0] = CRGB::Red;   // Set to red
+    FastLED.show();        // Update the LED strip
+
+    pinMode(switchGPIO, INPUT); // Set the button pin as input
+     // Attach interrupt to the button pin
+     attachInterrupt(digitalPinToInterrupt(switchGPIO), handleButtonPress, ONLOW);
    
   // Initialize the circular buffer
   initCircularBuffer();  // from circularBuffer.h
   
  // Print buffer status
- Serial.println("Buffer initialized:");
+  Serial.print("Buffer initialized. Size: ");
+  Serial.println(BUFFER_SIZE);
+  
+  // Print the number of items in the buffer
+  Serial.print("Items in buffer before any operations: ");
+  Serial.println(itemCount);
+
+ 
+  
+  // Initialize RTC
+  rtc.setTime(0, 0, 0, 1, 1, 2023); // Set to Jan 1, 2023, at midnight
+  Serial.print("RTC initialized to: ");
+  Serial.println(rtc.getTime());
+
+  
+   // Print buffer status after initialization
  Serial.print("Items in buffer: ");
  Serial.println(itemCount);
 
-// Print the memory address of circularBuffer
-Serial.print("Memory address of circularBuffer: ");
-Serial.println((uintptr_t)&EpochBuff, HEX);
-    
+
   
    
       Serial.print("RTC Test get Epoch; ");
@@ -149,15 +183,43 @@ Serial.printf("Connecting to %s ", ssid);
 }
 
 void loop() {
- // check if the touchValue is below the threshold
+ /*
+  // check if the touchValue is below the threshold
   // if it is, set ledPin to HIGH
   if(touchRead(touchPin) < threshold){
     // toggle touchToggle
     touchToggle = !touchToggle;
-digitalWrite(ledPin, touchToggle);
-   
-    Serial.println(touchToggle);
+*/
+
+if (Serial.available()) {
+  Serial.println("serialavailable-----------------------------------------------");
+  String command = Serial.readStringUntil('\n'); // Read the command
+  command.trim(); // Remove any whitespace
+
+  if (command != "") {
+      digitalWrite(ledPin, HIGH); // Turn the LED on
+      Serial.println("LED is ON");
+  } else if (command == "") {
+      digitalWrite(ledPin, LOW); // Turn the LED off
+      Serial.println("LED is OFF");
+  } else {
+      Serial.println("Unknown command. Use ON or OFF.");
   }
+}
+//digitalWrite(ledPin, touchToggle);
+
+if (buttonPressed) {
+  Serial.println("Button pressed!");
+  FastLED.setBrightness(255); // Set brightness (0-255)
+    leds[0] = CRGB::Green;   // Set to red
+    FastLED.show();        // Update the LED strip
+  delay(500);                 // Optional delay for LED
+  FastLED.setBrightness(100); // Set brightness (0-255)
+  leds[0] = CRGB::Red;   // Set to red
+  FastLED.show();        // Update the LED strip
+  
+}
+   
   
   int numbersend =random(5,30);
    now_ms = millis();
@@ -169,9 +231,9 @@ looptime_ms = now_ms -last_ms;
   sendTelemetry("fuckinFuckFuck", numbersend);
   // add data to the circular buffer
   sendstruct.epoch = rtc.getEpoch();
-  sendstruct.Float1 = looptime_ms * 1.0;
-  sendstruct.Float2 = rtc.getEpoch() + 1.0f;
-  sendstruct.Float3 = rtc.getEpoch() * 2.0f;
+  sendstruct.Float1 = numbersend;
+  sendstruct.Float2 = numbersend + 1.0f;
+  sendstruct.Float3 = numbersend * 2.0f;
   if (pushToBuffer(&sendstruct)) {
     Serial.print("Pushed to buffer: ");
     Serial.println(numbersend);
@@ -192,28 +254,13 @@ looptime_ms = now_ms -last_ms;
     Serial.println(circularBuffer.items);
     */
 
-    // Print buffer contents
+   /* // Print buffer contents
     Serial.println("Buffer contents:");
     iterateBuffer(&myBufferPrintout); // from circularBuffer.h
     Serial.println();
-/*
 
- if (circularBuffer.isFull()) {
-        Serial.println("The circular buffer is full");
-        // Print the values in the circular buffer
-    Serial.println("Circular Buffer Contents after FULL:");
-    for (size_t i = 0; i < circularBuffer.size(); ++i) {
-        Serial.println(circularBuffer[i]);
-    }
-    } else {
-        Serial.println("The circular buffer is not full");
-        Serial.println("Circular Buffer Contents while still NOT_ FULL:");
-    for (size_t i = 0; i < circularBuffer.size(); ++i) {
-        Serial.println(circularBuffer[i]);
-    }
-    }
+    */
 
-*/ 
 
 
 
@@ -226,10 +273,10 @@ uint16_t tempdata = 0;
 
 
  // Simulate popping data if buffer has more than 4 items
- if (itemCount > 4) {
+ if (buttonPressed) {
   Serial.println("------------------popping start------------------");
   // Pop data from the buffer
-  for (size_t i = 0; i < 4 && itemCount > 0; ++i) {
+  for (size_t i = 0;  itemCount != 0; ++i) {
       if (popFromBuffer(&sendstruct)) {
           Serial.print("Popped from buffer: ");
           Serial.println(sendstruct.Float1);
@@ -241,15 +288,23 @@ uint16_t tempdata = 0;
           Serial.println(sendstruct.Float2);
           Serial.print("Float3: ");
           Serial.println(sendstruct.Float3);
+          if (i % 2 == 0) {
+            ;
+          } else {
+            leds[0] = CRGB::Yellow;   // Set to red
+            FastLED.show();        // Update the LED strip
+          }
+          
       } else {
           Serial.println("Buffer is empty, cannot pop.");
           break; // Exit if buffer is empty
       }
   }
-
+  Serial.println("------------------popping end------------------");
+  buttonPressed = false;      // Reset flag
 }
-    Serial.println("------------------popping end------------------");
-delay(2000);
+   
+delay(1000);
 //Go to sleep now
  esp_deep_sleep_start();
      // esp_task_wdt_reset();   

@@ -9,7 +9,11 @@ int sendData(const char* data);
 
 
 // Define the buffer size
-constexpr size_t BUFFER_SIZE = 10;
+constexpr size_t BUFFER_SIZE = 582;
+// 582 elements of buffer has been worked out by estimating then reducing by one at a time untill 
+// compiler did not report slow memory overflow, which resuletd in 582 elements
+//it was estimated that the 4 controlling variables used 13bytes and the buffer elements sets used 
+// 14 bytes for each buffer size set 
 
 // Declare buffer and related variables in RTC slow memory
 extern RTC_DATA_ATTR uint16_t EpochBuff[BUFFER_SIZE];
