@@ -13,11 +13,15 @@
 #include "WiFi.h"
 #include "CircularBuffer.h"
 #include <FastLED.h> // for the serial rgb led control on GPIO 38
-#define LED_PIN     48      // Pin connected to the LED strip
+#define RGB_LED_PIN     48      // Pin connected to the LED strip
 #define NUM_LEDS    1      // Number of LEDs in the strip
 #define COLOR_ORDER GRB     // Color order for SK6812
 
 #define switchGPIO 0 // GPIO pin for the switch
+
+#define ledPin1 18 // GPIO18 pin for the LED- active low
+#define ledPin2 43 // GPIO43 pin for the LED- active low GREEN bad- resets chip possibly
+
 
 CRGB leds[NUM_LEDS];
 
@@ -59,7 +63,7 @@ ESP32Time rtc;
 
 // set pin numbers
 const int touchPin = 13; 
-const int ledPin = 5;
+
 
 // change with your threshold value
 const int threshold = 20;
@@ -92,7 +96,7 @@ void myBufferPrintout(DATASEND datas) {
 
 RTC_DATA_ATTR bool buttonPressed = false; // Flag for button press
 
-void IRAM_ATTR handleButtonPress() {
+void  handleButtonPress() {
     buttonPressed = true; // Set the flag when button is pressed
   
 }
@@ -108,7 +112,7 @@ void setup() {
    Serial.println("buffer items number; before initialise");
 
    //FAST LED setup
-   FastLED.addLeds<SK6812, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
+   FastLED.addLeds<SK6812, RGB_LED_PIN, COLOR_ORDER>(leds, NUM_LEDS);
     FastLED.setBrightness(100); // Set brightness (0-255)
     leds[0] = CRGB::Red;   // Set to red
     FastLED.show();        // Update the LED strip
@@ -116,6 +120,12 @@ void setup() {
     pinMode(switchGPIO, INPUT); // Set the button pin as input
      // Attach interrupt to the button pin
      attachInterrupt(digitalPinToInterrupt(switchGPIO), handleButtonPress, ONLOW);
+
+     //plain led setup and onage
+  //pinMode(ledPin1, OUTPUT); // Set GPIO18 as output for LED
+  //pinMode(ledPin2, OUTPUT); // Set GPIO43 as output for LED
+  //digitalWrite(ledPin1, LOW); // Turn on LED on GPIO18
+  //digitalWrite(ledPin2, LOW); // Turn on LED on GPIO43
    
   // Initialize the circular buffer
   initCircularBuffer();  // from circularBuffer.h
@@ -155,10 +165,10 @@ void setup() {
    ++persistant;
    Serial.print("persistant =");
    Serial.println(persistant);
-    pinMode(ledPin, OUTPUT);
+   // pinMode(ledPin, OUTPUT);
 
   // set initial LED state
-  digitalWrite(ledPin, false);
+  //digitalWrite(ledPin, false);
  
     Serial.print("Reset Reason was: "); Serial.println(resetreason);
     
@@ -196,15 +206,20 @@ if (Serial.available()) {
   String command = Serial.readStringUntil('\n'); // Read the command
   command.trim(); // Remove any whitespace
 
-  if (command != "") {
-      digitalWrite(ledPin, HIGH); // Turn the LED on
-      Serial.println("LED is ON");
-  } else if (command == "") {
-      digitalWrite(ledPin, LOW); // Turn the LED off
-      Serial.println("LED is OFF");
-  } else {
-      Serial.println("Unknown command. Use ON or OFF.");
-  }
+  // if (command != "")
+  // {
+  //   digitalWrite(ledPin, HIGH); // Turn the LED on
+  //   Serial.println("LED is ON");
+  // }
+  // else if (command == "")
+  // {
+  //   digitalWrite(ledPin, LOW); // Turn the LED off
+  //   Serial.println("LED is OFF");
+  // }
+  // else
+  // {
+  //   Serial.println("Unknown command. Use ON or OFF.");
+  // }
 }
 //digitalWrite(ledPin, touchToggle);
 
